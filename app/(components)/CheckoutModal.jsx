@@ -12,6 +12,7 @@ export default function CheckoutModal({ artwork, onClose, onSuccess }) {
     try {
       const res = await fetch("/api/artworks/buy", {
          method: "POST",
+         headers: { "Content-Type": "application/json" },
          body: JSON.stringify({ artwork_id: artwork.artwork_id, buyer_name: name, shipping_address: address })
       });
       if (res.ok) {
