@@ -7,13 +7,32 @@ export async function POST(req) {
         if (!artwork_id) {
             return Response.json({ error: "Artwork ID is required" }, { status: 400 });
         }
+        if (!buyer_name || !buyer_name.trim()) {
+            return Response.json({ error: "Buyer name is required" }, { status: 400 });
+        }
+        if (!shipping_address || !shipping_address.trim()) {
+            return Response.json({ error: "Shipping address is required" }, { status: 400 });
+        }
 
-        // Technically you can save the buyer_name and shipping_address to a new 'orders' table. 
-        // For the mock, we will just mark the masterpiece as sold!
+        // Check if artwork is already sold
+        const [artworkRows] = await db.query("SELECT is_sold FROM artworks WHERE artwork_id = ?", [artwork_id]);
+        if (artworkRows.length === 0) {
+            return Response.json({ error: "Artwork not found" }, { status: 404 });
+        }
+        if (artworkRows[0].is_sold) {
+            return Response.json({ error: "This artwork has already been sold" }, { status: 400 });
+        }
 
+        // Mark artwork as sold
         await db.query(
             "UPDATE artworks SET is_sold = true WHERE artwork_id = ?",
             [artwork_id]
+        );
+
+        // Record the order
+        await db.query(
+            "INSERT INTO orders (artwork_id, buyer_name, shipping_address) VALUES (?, ?, ?)",
+            [artwork_id, buyer_name.trim(), shipping_address.trim()]
         );
 
         return Response.json({ message: "Purchase completed successfully! Masterpiece secured." });
