@@ -34,18 +34,16 @@ export default function ViewerAuthPage() {
           throw new Error(data.error || "Failed to login");
         }
 
-        // Clear any artist session before setting viewer session
         localStorage.removeItem("artist_id");
         localStorage.removeItem("artist_name");
-        // Store viewer info locally safely
+       
         localStorage.setItem("viewer_id", data.user_id);
         localStorage.setItem("viewer_name", data.name);
         localStorage.setItem("is_admin", data.is_admin ? "true" : "false");
         
-        // Hard refresh to rehydrate server components and flush client caches
         window.location.href = "/";
       } else {
-        // Register Flow
+        
         const res = await fetch("/api/auth/register-viewer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
