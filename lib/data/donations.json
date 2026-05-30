@@ -1,0 +1,58 @@
+[
+  {
+    "donation_id": 1,
+    "artist_id": 5,
+    "user_id": 1,
+    "amount": "50.00",
+    "donated_at": "2026-03-20T06:01:50.000Z",
+    "payment_status": "success"
+  },
+  {
+    "donation_id": 2,
+    "artist_id": 6,
+    "user_id": 1,
+    "amount": "20.00",
+    "donated_at": "2026-03-20T06:04:00.000Z",
+    "payment_status": "success"
+  },
+  {
+    "donation_id": 3,
+    "artist_id": 9,
+    "user_id": 1,
+    "amount": "50.00",
+    "donated_at": "2026-03-20T06:04:28.000Z",
+    "payment_status": "success"
+  },
+  {
+    "donation_id": 4,
+    "artist_id": 2,
+    "user_id": 3,
+    "amount": "500.00",
+    "donated_at": "2026-03-20T08:17:26.000Z",
+    "payment_status": "success"
+  },
+  {
+    "donation_id": 5,
+    "artist_id": 13,
+    "user_id": 3,
+    "amount": "500.00",
+    "donated_at": "2026-03-20T08:30:30.000Z",
+    "payment_status": "success"
+  },
+  {
+    "donation_id": 6,
+    "artist_id": 13,
+    "user_id": 3,
+    "amount": "500.00",
+    "donated_at": "2026-03-20T08:31:11.000Z",
+    "payment_status": "success"
+  },
+  {
+    "donation_id": 7,
+    "artist_id": 13,
+    "user_id": 3,
+    "amount": "1000.00",
+    "donated_at": "2026-03-20T08:31:15.000Z",
+    "payment_status": "success"
+  }
+]

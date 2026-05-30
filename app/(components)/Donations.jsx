@@ -14,22 +14,19 @@ export default function Donations({ artistId, artistName }) {
       return;
     }
 
-    const res = await fetch("/api/donations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        artist_id: artistId,
-        user_id: parseInt(viewer_id),
-        amount: parseFloat(amount),
-      }),
+    // Save mock donation in localStorage
+    const localDonations = JSON.parse(localStorage.getItem("local_donations") || "[]");
+    localDonations.push({
+      donation_id: Date.now(),
+      artist_id: artistId,
+      user_id: parseInt(viewer_id),
+      amount: parseFloat(amount),
+      created_at: new Date().toISOString(),
     });
+    localStorage.setItem("local_donations", JSON.stringify(localDonations));
 
-    if (res.ok) {
-      setStatus("Success! Thank you for supporting " + artistName);
-      setAmount("");
-    } else {
-      setStatus("Transaction failed. Please try again.");
-    }
+    setStatus("Success! Thank you for supporting " + artistName);
+    setAmount("");
   };
 
   return (

@@ -3,14 +3,20 @@ import Review from "../../(components)/Review.jsx";
 import Donations from "../../(components)/Donations.jsx";
 import PurchaseButton from "../../(components)/PurchaseButton.jsx";
 import Image from "next/image";
-import { db } from "@/lib/db";
+import artistsData from "@/lib/data/artists.json";
+import artworksData from "@/lib/data/artworks.json";
+
+export async function generateStaticParams() {
+  return artistsData.map((artist) => ({
+    slug: artist.slug,
+  }));
+}
 
 export default async function ArtistProfile({ params }) {
   const { slug } = await params;
 
-  // Directly query the database from the Server Component for blazing fast, prod-ready data
-  const [artists] = await db.query("SELECT * FROM artists WHERE slug = ?", [slug]);
-  const artist = artists[0];
+  // Read artist and artworks statically from JSON files
+  const artist = artistsData.find((a) => a.slug === slug);
 
   if (!artist) {
     return (
@@ -20,10 +26,9 @@ export default async function ArtistProfile({ params }) {
     );
   }
 
-  const [artworks] = await db.query(
-    "SELECT * FROM artworks WHERE artist_id = ? ORDER BY created_at DESC",
-    [artist.artist_id]
-  );
+  const artworks = artworksData
+    .filter((item) => item.artist_id === artist.artist_id)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   return (
     <div className="bg-black">

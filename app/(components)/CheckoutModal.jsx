@@ -10,16 +10,18 @@ export default function CheckoutModal({ artwork, onClose, onSuccess }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/artworks/buy", {
-         method: "POST",
-         headers: { "Content-Type": "application/json" },
-         body: JSON.stringify({ artwork_id: artwork.artwork_id, buyer_name: name, shipping_address: address })
-      });
-      if (res.ok) {
-         onSuccess(artwork.artwork_id);
-      } else {
-         alert("Transaction failed! Please try again.");
+      // Simulate payment delay
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+
+      const localSold = JSON.parse(localStorage.getItem("local_sold_artworks") || "[]");
+      if (!localSold.includes(artwork.artwork_id)) {
+        localSold.push(artwork.artwork_id);
+        localStorage.setItem("local_sold_artworks", JSON.stringify(localSold));
       }
+
+      onSuccess(artwork.artwork_id);
+    } catch (err) {
+      alert("Transaction failed! Please try again.");
     } finally {
       setLoading(false);
     }

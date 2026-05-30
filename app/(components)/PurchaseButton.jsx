@@ -1,11 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CheckoutModal from "./CheckoutModal";
 
 export default function PurchaseButton({ artwork }) {
     const [showModal, setShowModal] = useState(false);
     // Control state via is_sold from the database directly!
     const [sold, setSold] = useState(artwork.is_sold === 1 || artwork.is_sold === true);
+
+    useEffect(() => {
+        const localSold = JSON.parse(localStorage.getItem("local_sold_artworks") || "[]");
+        if (localSold.includes(artwork.artwork_id)) {
+            setSold(true);
+        }
+    }, [artwork.artwork_id]);
 
     const handleSuccess = () => {
         setShowModal(false);

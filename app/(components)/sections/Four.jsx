@@ -7,17 +7,15 @@ import "swiper/css";
 import "swiper/css/autoplay";
 import "swiper/css/navigation";
 import Link from "next/link";
+import artistsData from "@/lib/data/artists.json";
 
 export default function Four() {
   const swiperRef = useRef(null);
-  const [artists, setArtists] = useState([]);
+  const [artists, setArtists] = useState(() => {
+    // Keep descending order so newest artists appear first
+    return artistsData.slice().sort((a, b) => b.artist_id - a.artist_id);
+  });
   const [swiperInstance, setSwiperInstance] = useState(null);
-
-  useEffect(() => {
-    fetch("/api/artists")
-      .then((res) => res.json())
-      .then((data) => setArtists(data));
-  }, []);
 
   return (
     <>

@@ -1,7 +1,7 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import usersData from "@/lib/data/users.json";
 
 export default function ViewerAuthPage() {
   const router = useRouter();
@@ -31,23 +31,27 @@ export default function ViewerAuthPage() {
 
     try {
       if (isLogin) {
-        const res = await fetch("/api/auth/login-viewer", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
+        // Simulate connection latency
+        await new Promise((resolve) => setTimeout(resolve, 800));
 
-        const data = await res.json();
+        // 1. Search in static users data exported from DB
+        let foundUser = usersData.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
 
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to login");
+        // 2. Search in client-side local users
+        if (!foundUser) {
+          const localUsers = JSON.parse(localStorage.getItem("local_users") || "[]");
+          foundUser = localUsers.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+        }
+
+        if (!foundUser) {
+          throw new Error("No user found with this email. Feel free to Join the Gallery by registering!");
         }
 
         localStorage.removeItem("artist_id");
         localStorage.removeItem("artist_name");
-        localStorage.setItem("viewer_id", data.user_id);
-        localStorage.setItem("viewer_name", data.name);
-        localStorage.setItem("is_admin", data.is_admin ? "true" : "false");
+        localStorage.setItem("viewer_id", foundUser.user_id);
+        localStorage.setItem("viewer_name", foundUser.name);
+        localStorage.setItem("is_admin", foundUser.role === "admin" ? "true" : "false");
 
         window.location.href = "/";
       } else {
@@ -55,17 +59,28 @@ export default function ViewerAuthPage() {
         if (!username.trim()) { throw new Error("Username is required"); }
         if (username.length < 3) { throw new Error("Username must be at least 3 characters"); }
 
-        const res = await fetch("/api/auth/register-viewer", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: name.trim(), username: username.trim(), email: email.trim() }),
-        });
+        // Simulate connection latency
+        await new Promise((resolve) => setTimeout(resolve, 800));
 
-        const data = await res.json();
+        // Check if user already exists
+        const emailExistsStatic = usersData.some((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+        const localUsers = JSON.parse(localStorage.getItem("local_users") || "[]");
+        const emailExistsLocal = localUsers.some((u) => u.email.toLowerCase() === email.trim().toLowerCase());
 
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to register");
+        if (emailExistsStatic || emailExistsLocal) {
+          throw new Error("Email already registered. Please sign in!");
         }
+
+        const newUser = {
+          user_id: Date.now(),
+          name: name.trim(),
+          username: username.trim(),
+          email: email.trim(),
+          role: "user"
+        };
+
+        localUsers.push(newUser);
+        localStorage.setItem("local_users", JSON.stringify(localUsers));
 
         alert("Welcome to the gallery! Registration successful. Please sign in now.");
         setIsLogin(true);

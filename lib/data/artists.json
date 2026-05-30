@@ -1,0 +1,101 @@
+[
+  {
+    "artist_id": 1,
+    "user_id": null,
+    "biography": "Italian Renaissance polymath known for masterpieces like the Mona Lisa and The Last Supper.",
+    "country": "Italy",
+    "profile_image": "/artists/leonardo.jpg",
+    "name": "Leonardo da Vinci",
+    "slug": "leonardo-da-vinci"
+  },
+  {
+    "artist_id": 2,
+    "user_id": null,
+    "biography": "Dutch post-impressionist painter famous for works like Starry Night and Sunflowers.",
+    "country": "Netherlands",
+    "profile_image": "/artists/vangogh.jpg",
+    "name": "Vincent van Gogh",
+    "slug": "vincent-van-gogh"
+  },
+  {
+    "artist_id": 3,
+    "user_id": null,
+    "biography": "Spanish artist and co-founder of the Cubist movement, one of the most influential artists of the 20th century.",
+    "country": "Spain",
+    "profile_image": "/artists/picasso.jpg",
+    "name": "Pablo Picasso",
+    "slug": "pablo-picasso"
+  },
+  {
+    "artist_id": 4,
+    "user_id": null,
+    "biography": "Mexican painter known for powerful self-portraits exploring identity, pain, and culture.",
+    "country": "Mexico",
+    "profile_image": "/artists/kahlo.jpg",
+    "name": "Frida Kahlo",
+    "slug": "frida-kahlo"
+  },
+  {
+    "artist_id": 5,
+    "user_id": null,
+    "biography": "French painter and founder of the Impressionist movement, known for Water Lilies.",
+    "country": "France",
+    "profile_image": "/artists/monet.jpg",
+    "name": "Claude Monet",
+    "slug": "claude-monet"
+  },
+  {
+    "artist_id": 6,
+    "user_id": null,
+    "biography": "Spanish surrealist artist famous for dreamlike imagery and melting clocks.",
+    "country": "Spain",
+    "profile_image": "/artists/dali.jpg",
+    "name": "Salvador Dalí",
+    "slug": "salvador-dali"
+  },
+  {
+    "artist_id": 8,
+    "user_id": null,
+    "biography": "Anonymous street artist known for politically charged graffiti and satirical artwork.",
+    "country": "United Kingdom",
+    "profile_image": "/artists/banksy.jpg",
+    "name": "Banksy",
+    "slug": "banksy"
+  },
+  {
+    "artist_id": 9,
+    "user_id": null,
+    "biography": "American pop artist known for works featuring Campbell’s soup cans and celebrity portraits.",
+    "country": "USA",
+    "profile_image": "/artists/warhol.jpg",
+    "name": "Andy Warhol",
+    "slug": "andy-warhol"
+  },
+  {
+    "artist_id": 10,
+    "user_id": null,
+    "biography": "Italian Renaissance sculptor and painter known for the Sistine Chapel ceiling and David.",
+    "country": "Italy",
+    "profile_image": "/artists/michelangelo.jpg",
+    "name": "Michelangelo",
+    "slug": "michelangelo"
+  },
+  {
+    "artist_id": 13,
+    "user_id": 5,
+    "biography": "WP",
+    "country": "italy",
+    "profile_image": "/uploads/1773995349204_skd.J.png",
+    "name": "Karthik sir",
+    "slug": "karthik-sir"
+  },
+  {
+    "artist_id": 14,
+    "user_id": 7,
+    "biography": "123",
+    "country": "India",
+    "profile_image": "/uploads/1776108754593_joel_filipe_QwoNAhbmLLo_unsplash.jpg",
+    "name": "Pranay Kapoor",
+    "slug": "pranay-kapoor"
+  }
+]

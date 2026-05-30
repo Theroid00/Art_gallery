@@ -1,50 +1,62 @@
 "use client";
 import { useState, useEffect } from "react";
+import reviewsData from "@/lib/data/reviews.json";
+import usersData from "@/lib/data/users.json";
 
 export default function Review({ artistId }) {
   const [review, setReview] = useState([]);
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(5);
 
-  const fetchReviews = async () => {
-    const res = await fetch(`/api/review?artist_id=${artistId}`);
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error(`Server Error (${res.status}):`, errorText);
-      try {
-        const errorData = JSON.parse(errorText);
-        console.error("Parsed API Error:", errorData);
-      } catch (e) {
-        console.error("Server sent non-JSON error (likely a 500 crash page)");
-      }
-      return;
-    }
-    const data = await res.json();
-    setReview(data);
+  const fetchReviews = () => {
+    // Get static reviews and resolve user names
+    const staticReviews = reviewsData
+      .filter((r) => r.artist_id === artistId)
+      .map((r) => {
+        const user = usersData.find((u) => u.user_id === r.user_id);
+        return {
+          ...r,
+          user_name: user ? user.name : "Anonymous Collector",
+        };
+      });
+
+    // Get client-side reviews from localStorage
+    const localReviews = JSON.parse(localStorage.getItem("local_reviews") || "[]")
+      .filter((r) => r.artist_id === artistId);
+
+    // Merge and sort DESC
+    const merged = [...localReviews, ...staticReviews].sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
+
+    setReview(merged);
   };
 
   useEffect(() => {
     if (artistId) fetchReviews();
   }, [artistId]);
 
-  const handlesubmit = async (e) => {
+  const handlesubmit = (e) => {
     e.preventDefault();
     const viewer_id = localStorage.getItem("viewer_id");
+    const viewer_name = localStorage.getItem("viewer_name") || "You";
     if (!viewer_id) {
       alert("Please Sign In to leave a review.");
       return;
     }
 
-    await fetch("/api/review", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        artist_id: artistId,
-        user_id: parseInt(viewer_id),
-        rating: rating,
-        comment: comment,
-      }),
+    const localReviews = JSON.parse(localStorage.getItem("local_reviews") || "[]");
+    localReviews.push({
+      review_id: Date.now(),
+      artist_id: artistId,
+      user_id: parseInt(viewer_id),
+      user_name: viewer_name,
+      rating: rating,
+      comment: comment,
+      created_at: new Date().toISOString(),
     });
+    localStorage.setItem("local_reviews", JSON.stringify(localReviews));
+
     setComment("");
     fetchReviews();
   };
