@@ -1,22 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Wishlist from "../(components)/Wish.jsx";
+import categoriesData from "@/lib/data/categories.json";
+import { getAssetUrl } from "@/lib/utils";
 
 export default function World() {
-  const [cat, setCat] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [cat, setCat] = useState(() => categoriesData);
+  const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(null);
-
-  useEffect(() => {
-    async function fetchdata() {
-      const res = await fetch("/api/categories", { cache: "no-store" });
-      const data = await res.json();
-      setCat(data);
-      setLoading(false);
-    }
-    fetchdata();
-  }, []);
 
   if (loading) {
     return (
@@ -53,7 +45,7 @@ export default function World() {
             <div className="group relative bg-zinc-900/50 rounded-2xl overflow-hidden border border-white/5 hover:border-amber-50/20 transition-all duration-500">
               <div className="relative w-full h-72 overflow-hidden">
                 <Image
-                  src={item.image_url_1}
+                  src={getAssetUrl(item.image_url_1)}
                   fill
                   alt={item.name}
                   className="object-cover group-hover:scale-110 transition-transform duration-700"
@@ -98,7 +90,7 @@ export default function World() {
                 <p className="text-gray-300 text-lg mb-8 leading-relaxed">
                   {item.description}
                 </p>
-                {[item.image_url_1, item.image_url_2, item.image_url_3].map((img, i) => (
+                {[getAssetUrl(item.image_url_1), getAssetUrl(item.image_url_2), getAssetUrl(item.image_url_3)].map((img, i) => (
                   <div key={i} className="relative mb-8 group/img">
                     <div className="relative w-full h-72 md:h-96 rounded-xl overflow-hidden bg-zinc-900">
                       <Image

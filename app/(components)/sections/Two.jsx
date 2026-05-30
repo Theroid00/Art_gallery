@@ -1,12 +1,13 @@
 "use client";
 import Image from "next/image";
+import { getAssetUrl } from "@/lib/utils";
 
 export default function Two() {
   const content = [
-    { id: 1, title: "Art1", source: "/assets/images/black_cat.jpg" },
-    { id: 2, title: "Art2", source: "/assets/images/two.jpg" },
-    { id: 3, title: "Art3", source: "/assets/images/download (2).jpg" },
-    { id: 4, title: "Art4", source: "/assets/images/black.jpg" },
+    { id: 1, title: "Art1", source: getAssetUrl("/assets/images/black_cat.jpg") },
+    { id: 2, title: "Art2", source: getAssetUrl("/assets/images/two.jpg") },
+    { id: 3, title: "Art3", source: getAssetUrl("/assets/images/download (2).jpg") },
+    { id: 4, title: "Art4", source: getAssetUrl("/assets/images/black.jpg") },
   ];
 
   return (
@@ -44,7 +45,7 @@ export default function Two() {
           {/* Right side image */}
           <div className="flex justify-center">
             <Image
-              src="/assets/images/artisty-removebg-preview.png"
+              src={getAssetUrl("/assets/images/artisty-removebg-preview.png")}
               alt="Artistic illustration"
               width={500}
               height={400}
