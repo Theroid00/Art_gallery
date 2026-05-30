@@ -79,23 +79,5 @@
     "profile_image": "/artists/michelangelo.jpg",
     "name": "Michelangelo",
     "slug": "michelangelo"
-  },
-  {
-    "artist_id": 13,
-    "user_id": 5,
-    "biography": "WP",
-    "country": "italy",
-    "profile_image": "/uploads/1773995349204_skd.J.png",
-    "name": "Karthik sir",
-    "slug": "karthik-sir"
-  },
-  {
-    "artist_id": 14,
-    "user_id": 7,
-    "biography": "123",
-    "country": "India",
-    "profile_image": "/uploads/1776108754593_joel_filipe_QwoNAhbmLLo_unsplash.jpg",
-    "name": "Pranay Kapoor",
-    "slug": "pranay-kapoor"
   }
 ]

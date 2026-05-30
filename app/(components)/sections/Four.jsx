@@ -8,6 +8,7 @@ import "swiper/css/autoplay";
 import "swiper/css/navigation";
 import Link from "next/link";
 import artistsData from "@/lib/data/artists.json";
+import { getAssetUrl } from "@/lib/utils";
 
 export default function Four() {
   const swiperRef = useRef(null);
@@ -61,7 +62,7 @@ export default function Four() {
                 <Link href={`/artists/${item.slug}`}>
                   <div className="cursor-pointer h-[200px] sm:h-[250px] md:h-[300px] overflow-hidden rounded-lg">
                     <Image
-                      src={item.profile_image}
+                      src={getAssetUrl(item.profile_image)}
                       alt={item.name}
                       width={400}
                       height={400}

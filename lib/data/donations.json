@@ -30,29 +30,5 @@
     "amount": "500.00",
     "donated_at": "2026-03-20T08:17:26.000Z",
     "payment_status": "success"
-  },
-  {
-    "donation_id": 5,
-    "artist_id": 13,
-    "user_id": 3,
-    "amount": "500.00",
-    "donated_at": "2026-03-20T08:30:30.000Z",
-    "payment_status": "success"
-  },
-  {
-    "donation_id": 6,
-    "artist_id": 13,
-    "user_id": 3,
-    "amount": "500.00",
-    "donated_at": "2026-03-20T08:31:11.000Z",
-    "payment_status": "success"
-  },
-  {
-    "donation_id": 7,
-    "artist_id": 13,
-    "user_id": 3,
-    "amount": "1000.00",
-    "donated_at": "2026-03-20T08:31:15.000Z",
-    "payment_status": "success"
   }
 ]
