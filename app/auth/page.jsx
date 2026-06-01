@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { hashPassword } from "@/lib/utils";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -67,8 +68,10 @@ export default function AuthPage() {
           throw new Error("No artist account found with this email. Please join as an artist!");
         }
 
-        // Verify password
-        if (foundUser.password_hash !== password.trim()) {
+        // Verify password (supports both SHA-256 and legacy plaintext for backward compatibility)
+        const enteredHash = await hashPassword(password.trim());
+        const isMatch = (foundUser.password_hash === enteredHash) || (foundUser.password_hash === password.trim());
+        if (!isMatch) {
           throw new Error("Incorrect password. Please try again.");
         }
 
@@ -148,6 +151,9 @@ export default function AuthPage() {
           }
         }
 
+        // Hash the password securely client-side before inserting
+        const securePasswordHash = await hashPassword(password.trim());
+
         // 2. Insert into users table
         const { data: userData, error: errInsertUser } = await supabase
           .from("users")
@@ -155,7 +161,7 @@ export default function AuthPage() {
             name: name.trim(),
             username: username.trim().toLowerCase(),
             email: email.trim().toLowerCase(),
-            password_hash: password.trim(),
+            password_hash: securePasswordHash,
             role: "artist",
           })
           .select("user_id")

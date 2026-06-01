@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { hashPassword } from "@/lib/utils";
 
 export default function ViewerAuthPage() {
   const router = useRouter();
@@ -52,8 +53,10 @@ export default function ViewerAuthPage() {
           throw new Error("No user found with this email. Feel free to Join the Gallery by registering!");
         }
 
-        // Verify password hash
-        if (foundUser.password_hash !== password.trim()) {
+        // Verify password hash (supports both SHA-256 and plaintext for backward compatibility)
+        const enteredHash = await hashPassword(password.trim());
+        const isMatch = (foundUser.password_hash === enteredHash) || (foundUser.password_hash === password.trim());
+        if (!isMatch) {
           throw new Error("Incorrect password. Please try again.");
         }
 
@@ -93,12 +96,15 @@ export default function ViewerAuthPage() {
           throw new Error("Username already taken. Please choose another one!");
         }
 
+        // Hash the password securely client-side before inserting
+        const securePasswordHash = await hashPassword(password.trim());
+
         // Insert new user into live users table
         const { error: errInsert } = await supabase.from("users").insert({
           name: name.trim(),
           username: username.trim().toLowerCase(),
           email: email.trim().toLowerCase(),
-          password_hash: password.trim(),
+          password_hash: securePasswordHash,
           role: "user"
         });
 
