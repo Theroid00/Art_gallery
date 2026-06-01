@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/static-export
+      - feature/supabase-integration
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
