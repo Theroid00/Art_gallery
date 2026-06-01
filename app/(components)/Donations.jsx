@@ -25,7 +25,8 @@ export default function Donations({ artistId, artistName }) {
 
     if (error) {
       console.error(error);
-      setStatus("Transaction failed. Please try again.");
+      setStatus(`Transaction failed: ${error.message} (Code: ${error.code})`);
+      alert(`Transaction failed: ${error.message} (Code: ${error.code})`);
     } else {
       setStatus("Success! Thank you for supporting " + artistName);
       setAmount("");

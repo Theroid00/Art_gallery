@@ -54,7 +54,7 @@ export default function Review({ artistId }) {
 
     if (error) {
       console.error(error);
-      alert("Failed to submit review.");
+      alert(`Failed to submit review: ${error.message} (Code: ${error.code})`);
     } else {
       setComment("");
       fetchReviews();

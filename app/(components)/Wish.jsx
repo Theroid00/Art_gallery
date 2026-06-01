@@ -36,7 +36,7 @@ const handleWishlist=async()=>{
     alert("Added to wishlist!");
   } catch (error){
     console.error("Wishlist Error:", error);
-    alert("Failed to add to wishlist.");
+    alert("Failed to add to wishlist: " + (error.message || error));
   }
 };
    return (
