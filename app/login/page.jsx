@@ -11,6 +11,7 @@ export default function ViewerAuthPage() {
 
   // Form State
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
 
@@ -24,6 +25,11 @@ export default function ViewerAuthPage() {
 
     if (!isEmailValid) {
       setError("Please enter a valid email address");
+      return;
+    }
+
+    if (!password.trim()) {
+      setError("Password is required");
       return;
     }
 
@@ -46,17 +52,24 @@ export default function ViewerAuthPage() {
           throw new Error("No user found with this email. Feel free to Join the Gallery by registering!");
         }
 
+        // Verify password hash
+        if (foundUser.password_hash !== password.trim()) {
+          throw new Error("Incorrect password. Please try again.");
+        }
+
         localStorage.removeItem("artist_id");
         localStorage.removeItem("artist_name");
         localStorage.setItem("viewer_id", foundUser.user_id);
         localStorage.setItem("viewer_name", foundUser.name);
         localStorage.setItem("is_admin", foundUser.role === "admin" ? "true" : "false");
 
-        window.location.href = "/";
+        // Redirect to the correct GitHub Pages subdirectory!
+        window.location.href = "/Art_gallery/";
       } else {
         if (!name.trim()) { throw new Error("Name is required"); }
         if (!username.trim()) { throw new Error("Username is required"); }
         if (username.length < 3) { throw new Error("Username must be at least 3 characters"); }
+        if (password.length < 4) { throw new Error("Password must be at least 4 characters"); }
 
         // Check if email already exists in Supabase
         const { data: existingEmails, error: errEmail } = await supabase
@@ -85,7 +98,7 @@ export default function ViewerAuthPage() {
           name: name.trim(),
           username: username.trim().toLowerCase(),
           email: email.trim().toLowerCase(),
-          password_hash: "none", // Since we use single email check auth for simplicity
+          password_hash: password.trim(),
           role: "user"
         });
 
@@ -95,6 +108,7 @@ export default function ViewerAuthPage() {
         setIsLogin(true);
         setName("");
         setUsername("");
+        setPassword("");
       }
     } catch (err) {
       setError(err.message);
@@ -166,6 +180,19 @@ export default function ViewerAuthPage() {
             {emailTouched && !isEmailValid && email && (
               <p className="text-xs text-red-400 mt-1">Please enter a valid email address</p>
             )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium mb-1 tracking-wider text-gray-400">PASSWORD *</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-transparent border-b border-gray-600 focus:border-amber-50 p-2.5 outline-none transition-colors"
+              placeholder="••••••••"
+              minLength={4}
+            />
           </div>
 
           <button
