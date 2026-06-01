@@ -3,12 +3,12 @@ import Review from "../../(components)/Review.jsx";
 import Donations from "../../(components)/Donations.jsx";
 import PurchaseButton from "../../(components)/PurchaseButton.jsx";
 import Image from "next/image";
-import artistsData from "@/lib/data/artists.json";
-import artworksData from "@/lib/data/artworks.json";
+import { supabase } from "@/lib/supabase";
 import { getAssetUrl } from "@/lib/utils";
 
 export async function generateStaticParams() {
-  return artistsData.map((artist) => ({
+  const { data: artists } = await supabase.from("artists").select("slug");
+  return (artists || []).map((artist) => ({
     slug: artist.slug,
   }));
 }
@@ -16,8 +16,9 @@ export async function generateStaticParams() {
 export default async function ArtistProfile({ params }) {
   const { slug } = await params;
 
-  // Read artist and artworks statically from JSON files
-  const artist = artistsData.find((a) => a.slug === slug);
+  // Query live artist from Supabase
+  const { data: artists } = await supabase.from("artists").select("*").eq("slug", slug);
+  const artist = artists?.[0];
 
   if (!artist) {
     return (
@@ -27,9 +28,14 @@ export default async function ArtistProfile({ params }) {
     );
   }
 
-  const artworks = artworksData
-    .filter((item) => item.artist_id === artist.artist_id)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  // Query live artworks for this artist
+  const { data: artworksRaw } = await supabase
+    .from("artworks")
+    .select("*")
+    .eq("artist_id", artist.artist_id)
+    .order("created_at", { ascending: false });
+
+  const artworks = artworksRaw || [];
 
   return (
     <div className="bg-black">

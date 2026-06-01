@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function Donations({ artistId, artistName }) {
   const [amount, setAmount] = useState("");
@@ -14,19 +15,21 @@ export default function Donations({ artistId, artistName }) {
       return;
     }
 
-    // Save mock donation in localStorage
-    const localDonations = JSON.parse(localStorage.getItem("local_donations") || "[]");
-    localDonations.push({
-      donation_id: Date.now(),
+    // Insert live donation record into Supabase
+    const { error } = await supabase.from("donations").insert({
       artist_id: artistId,
       user_id: parseInt(viewer_id),
       amount: parseFloat(amount),
-      created_at: new Date().toISOString(),
+      payment_status: "success",
     });
-    localStorage.setItem("local_donations", JSON.stringify(localDonations));
 
-    setStatus("Success! Thank you for supporting " + artistName);
-    setAmount("");
+    if (error) {
+      console.error(error);
+      setStatus("Transaction failed. Please try again.");
+    } else {
+      setStatus("Success! Thank you for supporting " + artistName);
+      setAmount("");
+    }
   };
 
   return (

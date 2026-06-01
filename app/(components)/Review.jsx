@@ -1,64 +1,64 @@
 "use client";
 import { useState, useEffect } from "react";
-import reviewsData from "@/lib/data/reviews.json";
-import usersData from "@/lib/data/users.json";
+import { supabase } from "@/lib/supabase";
 
 export default function Review({ artistId }) {
   const [review, setReview] = useState([]);
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(5);
 
-  const fetchReviews = () => {
-    // Get static reviews and resolve user names
-    const staticReviews = reviewsData
-      .filter((r) => r.artist_id === artistId)
-      .map((r) => {
-        const user = usersData.find((u) => u.user_id === r.user_id);
-        return {
-          ...r,
-          user_name: user ? user.name : "Anonymous Collector",
-        };
-      });
+  const fetchReviews = async () => {
+    // Query live reviews with user names resolved from the joined users table
+    const { data, error } = await supabase
+      .from("artist_reviews")
+      .select(`
+        review_id,
+        artist_id,
+        rating,
+        comment,
+        created_at,
+        user:users(name)
+      `)
+      .eq("artist_id", artistId)
+      .order("created_at", { ascending: false });
 
-    // Get client-side reviews from localStorage
-    const localReviews = JSON.parse(localStorage.getItem("local_reviews") || "[]")
-      .filter((r) => r.artist_id === artistId);
-
-    // Merge and sort DESC
-    const merged = [...localReviews, ...staticReviews].sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
-
-    setReview(merged);
+    if (error) {
+      console.error(error);
+    } else if (data) {
+      const reviews = data.map((item) => ({
+        ...item,
+        user_name: item.user?.name || "Anonymous Collector",
+      }));
+      setReview(reviews);
+    }
   };
 
   useEffect(() => {
     if (artistId) fetchReviews();
   }, [artistId]);
 
-  const handlesubmit = (e) => {
+  const handlesubmit = async (e) => {
     e.preventDefault();
     const viewer_id = localStorage.getItem("viewer_id");
-    const viewer_name = localStorage.getItem("viewer_name") || "You";
     if (!viewer_id) {
       alert("Please Sign In to leave a review.");
       return;
     }
 
-    const localReviews = JSON.parse(localStorage.getItem("local_reviews") || "[]");
-    localReviews.push({
-      review_id: Date.now(),
+    const { error } = await supabase.from("artist_reviews").insert({
       artist_id: artistId,
       user_id: parseInt(viewer_id),
-      user_name: viewer_name,
       rating: rating,
       comment: comment,
-      created_at: new Date().toISOString(),
     });
-    localStorage.setItem("local_reviews", JSON.stringify(localReviews));
 
-    setComment("");
-    fetchReviews();
+    if (error) {
+      console.error(error);
+      alert("Failed to submit review.");
+    } else {
+      setComment("");
+      fetchReviews();
+    }
   };
 
   return (

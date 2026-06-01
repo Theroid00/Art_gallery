@@ -7,16 +7,24 @@ import "swiper/css";
 import "swiper/css/autoplay";
 import "swiper/css/navigation";
 import Link from "next/link";
-import artistsData from "@/lib/data/artists.json";
+import { supabase } from "@/lib/supabase";
 import { getAssetUrl } from "@/lib/utils";
 
 export default function Four() {
   const swiperRef = useRef(null);
-  const [artists, setArtists] = useState(() => {
-    // Keep descending order so newest artists appear first
-    return artistsData.slice().sort((a, b) => b.artist_id - a.artist_id);
-  });
+  const [artists, setArtists] = useState([]);
   const [swiperInstance, setSwiperInstance] = useState(null);
+
+  useEffect(() => {
+    async function loadArtists() {
+      const { data } = await supabase
+        .from("artists")
+        .select("*")
+        .order("artist_id", { ascending: false });
+      if (data) setArtists(data);
+    }
+    loadArtists();
+  }, []);
 
   return (
     <>

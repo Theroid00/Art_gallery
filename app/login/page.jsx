@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import usersData from "@/lib/data/users.json";
+import { supabase } from "@/lib/supabase";
 
 export default function ViewerAuthPage() {
   const router = useRouter();
@@ -31,17 +31,16 @@ export default function ViewerAuthPage() {
 
     try {
       if (isLogin) {
-        // Simulate connection latency
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        // Query live Supabase users table
+        const { data: foundUsers, error: errQuery } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", email.trim().toLowerCase())
+          .neq("role", "artist"); // Don't allow artists to login as viewers
 
-        // 1. Search in static users data exported from DB
-        let foundUser = usersData.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
+        if (errQuery) throw errQuery;
 
-        // 2. Search in client-side local users
-        if (!foundUser) {
-          const localUsers = JSON.parse(localStorage.getItem("local_users") || "[]");
-          foundUser = localUsers.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-        }
+        const foundUser = foundUsers?.[0];
 
         if (!foundUser) {
           throw new Error("No user found with this email. Feel free to Join the Gallery by registering!");
@@ -59,28 +58,38 @@ export default function ViewerAuthPage() {
         if (!username.trim()) { throw new Error("Username is required"); }
         if (username.length < 3) { throw new Error("Username must be at least 3 characters"); }
 
-        // Simulate connection latency
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        // Check if email already exists in Supabase
+        const { data: existingEmails, error: errEmail } = await supabase
+          .from("users")
+          .select("user_id")
+          .eq("email", email.trim().toLowerCase());
 
-        // Check if user already exists
-        const emailExistsStatic = usersData.some((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-        const localUsers = JSON.parse(localStorage.getItem("local_users") || "[]");
-        const emailExistsLocal = localUsers.some((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-
-        if (emailExistsStatic || emailExistsLocal) {
+        if (errEmail) throw errEmail;
+        if (existingEmails && existingEmails.length > 0) {
           throw new Error("Email already registered. Please sign in!");
         }
 
-        const newUser = {
-          user_id: Date.now(),
-          name: name.trim(),
-          username: username.trim(),
-          email: email.trim(),
-          role: "user"
-        };
+        // Check if username already exists in Supabase
+        const { data: existingUsernames, error: errUser } = await supabase
+          .from("users")
+          .select("user_id")
+          .eq("username", username.trim().toLowerCase());
 
-        localUsers.push(newUser);
-        localStorage.setItem("local_users", JSON.stringify(localUsers));
+        if (errUser) throw errUser;
+        if (existingUsernames && existingUsernames.length > 0) {
+          throw new Error("Username already taken. Please choose another one!");
+        }
+
+        // Insert new user into live users table
+        const { error: errInsert } = await supabase.from("users").insert({
+          name: name.trim(),
+          username: username.trim().toLowerCase(),
+          email: email.trim().toLowerCase(),
+          password_hash: "none", // Since we use single email check auth for simplicity
+          role: "user"
+        });
+
+        if (errInsert) throw errInsert;
 
         alert("Welcome to the gallery! Registration successful. Please sign in now.");
         setIsLogin(true);

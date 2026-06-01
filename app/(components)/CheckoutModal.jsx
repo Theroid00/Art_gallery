@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function CheckoutModal({ artwork, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
@@ -11,16 +12,19 @@ export default function CheckoutModal({ artwork, onClose, onSuccess }) {
     setLoading(true);
     try {
       // Simulate payment delay
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const localSold = JSON.parse(localStorage.getItem("local_sold_artworks") || "[]");
-      if (!localSold.includes(artwork.artwork_id)) {
-        localSold.push(artwork.artwork_id);
-        localStorage.setItem("local_sold_artworks", JSON.stringify(localSold));
-      }
+      // Update artwork status to Sold in Supabase
+      const { error } = await supabase
+        .from("artworks")
+        .update({ is_sold: true })
+        .eq("artwork_id", artwork.artwork_id);
+
+      if (error) throw error;
 
       onSuccess(artwork.artwork_id);
     } catch (err) {
+      console.error(err);
       alert("Transaction failed! Please try again.");
     } finally {
       setLoading(false);
