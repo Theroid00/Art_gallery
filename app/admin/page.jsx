@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -21,75 +22,187 @@ export default function AdminPage() {
     if (!viewerId) { router.push("/login"); return; }
     setAdminId(viewerId);
 
-    fetch("/api/auth/check-admin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: parseInt(viewerId) }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.isAdmin) { setIsAdmin(false); return; }
-        setIsAdmin(true);
-        loadData();
-      });
+    async function checkAdminStatus() {
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("role")
+          .eq("user_id", parseInt(viewerId))
+          .single();
+
+        if (error || !data || data.role !== "admin") {
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(true);
+          loadData();
+        }
+      } catch (err) {
+        setIsAdmin(false);
+      }
+    }
+
+    checkAdminStatus();
   }, [router]);
 
   const loadData = async () => {
-    const [uRes, aRes, artistRes, statsRes, ordersRes] = await Promise.all([
-      fetch("/api/admin/users"),
-      fetch("/api/artworks"),
-      fetch("/api/artists"),
-      fetch("/api/admin/stats"),
-      fetch("/api/admin/orders"),
-    ]);
-    const uData = await uRes.json();
-    const aData = await aRes.json();
-    const artData = await artistRes.json();
-    const statsData = await statsRes.json();
-    const ordersData = await ordersRes.json();
+    try {
+      // 1. Load users
+      const { data: usersData } = await supabase
+        .from("users")
+        .select("user_id, name, username, email, role, created_at")
+        .order("created_at", { ascending: false });
 
-    const formattedArtists = artData.map(artist => ({
-      ...artist,
-      role: "artist",
-      user_id: artist.artist_id,
-      created_at: artist.created_at || new Date().toISOString()
-    }));
+      // 2. Load artworks
+      const { data: artworksData } = await supabase
+        .from("artworks")
+        .select("*");
 
-    // Create artist name lookup for artworks
-    const artistMap = {};
-    artData.forEach(a => { artistMap[a.artist_id] = a.name; });
-    const artworksWithArtist = aData.map(a => ({ ...a, artist_name: artistMap[a.artist_id] || `Artist #${a.artist_id}` }));
+      // 3. Load artists
+      const { data: artistsData } = await supabase
+        .from("artists")
+        .select("*");
 
-    const allPeople = [...uData, ...formattedArtists];
-    setUsers(allPeople);
-    setArtworks(artworksWithArtist);
-    setStats(statsData);
-    setOrders(Array.isArray(ordersData) ? ordersData : []);
+      // 4. Load donations stats
+      const { data: donationsData } = await supabase
+        .from("donations")
+        .select("amount");
+
+      // 5. Load reviews count
+      const { count: reviewsCount } = await supabase
+        .from("artist_reviews")
+        .select("*", { count: "exact", head: true });
+
+      // 6. Load orders
+      const { data: ordersRaw } = await supabase
+        .from("orders")
+        .select(`
+          order_id,
+          buyer_name,
+          shipping_address,
+          ordered_at,
+          artwork:artworks(
+            artwork_id,
+            title,
+            price,
+            image_url,
+            artist:artists(name)
+          )
+        `)
+        .order("ordered_at", { ascending: false });
+
+      const uData = usersData || [];
+      const aData = artworksData || [];
+      const artData = artistsData || [];
+      const ordRaw = ordersRaw || [];
+
+      // Process stats
+      const totalDonations = donationsData ? donationsData.reduce((sum, d) => sum + parseFloat(d.amount), 0) : 0;
+      const adminUsersCount = uData.filter(u => u.role === "user" || u.role === "admin").length;
+
+      const statsData = {
+        users: adminUsersCount,
+        artists: artData.length,
+        artworks: aData.length,
+        totalDonations: totalDonations,
+        reviews: reviewsCount || 0,
+      };
+
+      // Process formatted artists to merge with users table view
+      const formattedArtists = artData.map((artist) => ({
+        ...artist,
+        role: "artist",
+        user_id: artist.artist_id,
+        created_at: artist.created_at || new Date().toISOString(),
+      }));
+
+      // Create artist name lookup for artworks
+      const artistMap = {};
+      artData.forEach((a) => {
+        artistMap[a.artist_id] = a.name;
+      });
+      const artworksWithArtist = aData.map((a) => ({
+        ...a,
+        artist_name: artistMap[a.artist_id] || `Artist #${a.artist_id}`,
+      }));
+
+      // Filter out raw artist entries from users table to prevent duplicate visual rows
+      const allPeople = [...uData.filter(u => u.role !== "artist"), ...formattedArtists];
+
+      const orders = ordRaw.map((o) => ({
+        order_id: o.order_id,
+        buyer_name: o.buyer_name,
+        shipping_address: o.shipping_address,
+        ordered_at: o.ordered_at,
+        artwork_id: o.artwork?.artwork_id,
+        artwork_title: o.artwork?.title || "Curated Piece",
+        price: o.artwork?.price || 0,
+        image_url: o.artwork?.image_url || "",
+        artist_name: o.artwork?.artist?.name || "Anonymous Artist",
+      }));
+
+      setUsers(allPeople);
+      setArtworks(artworksWithArtist);
+      setStats(statsData);
+      setOrders(orders);
+    } catch (err) {
+      console.error("Error loading admin data:", err);
+    }
   };
 
   const deleteUser = async (userId) => {
     if (!confirm("Permanently delete this user and all their data?")) return;
-    const res = await fetch("/api/admin/delete-user", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ admin_id: parseInt(adminId), user_id: userId }),
-    });
-    const data = await res.json();
-    if (res.ok) setUsers(users.filter(u => u.user_id !== userId));
-    else alert(data.error);
+    try {
+      // Prevent admin from deleting themselves
+      if (parseInt(adminId) === parseInt(userId)) {
+        alert("Cannot delete your own admin account.");
+        return;
+      }
+
+      // Delete dependent records first (wishlist, artist_reviews, donations)
+      await supabase.from("wishlist").delete().eq("user_id", userId);
+      await supabase.from("artist_reviews").delete().eq("user_id", userId);
+      await supabase.from("donations").delete().eq("user_id", userId);
+
+      // If they are an artist, delete their artworks and artist profile too
+      const { data: artistRows } = await supabase
+        .from("artists")
+        .select("artist_id")
+        .eq("user_id", userId);
+
+      if (artistRows && artistRows.length > 0) {
+        for (const artist of artistRows) {
+          await supabase.from("artist_reviews").delete().eq("artist_id", artist.artist_id);
+          await supabase.from("donations").delete().eq("artist_id", artist.artist_id);
+          await supabase.from("artworks").delete().eq("artist_id", artist.artist_id);
+          await supabase.from("artists").delete().eq("artist_id", artist.artist_id);
+        }
+      }
+
+      const { error: errDel } = await supabase.from("users").delete().eq("user_id", userId);
+      if (errDel) throw errDel;
+
+      setUsers(users.filter((u) => u.user_id !== userId));
+    } catch (err) {
+      alert("Failed to delete user: " + err.message);
+    }
   };
 
   const deleteArtwork = async (artworkId) => {
     if (!confirm("Permanently delete this artwork?")) return;
-    const res = await fetch("/api/admin/delete-artwork", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ admin_id: parseInt(adminId), artwork_id: artworkId }),
-    });
-    const data = await res.json();
-    if (res.ok) setArtworks(artworks.filter(a => a.artwork_id !== artworkId));
-    else alert(data.error);
+    try {
+      // Remove from wishlists first
+      await supabase.from("wishlist").delete().eq("artwork_id", artworkId);
+
+      // Delete the artwork
+      const { error } = await supabase.from("artworks").delete().eq("artwork_id", artworkId);
+      if (error) throw error;
+
+      setArtworks(artworks.filter((a) => a.artwork_id !== artworkId));
+    } catch (err) {
+      alert("Failed to delete artwork: " + err.message);
+    }
   };
+
 
   // Filter logic
   const filteredUsers = users.filter(u =>

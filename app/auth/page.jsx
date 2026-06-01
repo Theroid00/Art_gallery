@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function AuthPage() {
 
   // Form State
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [biography, setBiography] = useState("");
@@ -42,73 +44,145 @@ export default function AuthPage() {
       return;
     }
 
+    if (!password.trim()) {
+      setError("Password is required");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       if (isLogin) {
-        const res = await fetch("/api/auth/login-artist", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
+        // Query users table for the email and role='artist'
+        const { data: foundUsers, error: errQuery } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", email.trim().toLowerCase())
+          .eq("role", "artist");
 
-        const data = await res.json();
+        if (errQuery) throw errQuery;
 
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to login");
+        const foundUser = foundUsers?.[0];
+        if (!foundUser) {
+          throw new Error("No artist account found with this email. Please join as an artist!");
+        }
+
+        // Verify password
+        if (foundUser.password_hash !== password.trim()) {
+          throw new Error("Incorrect password. Please try again.");
+        }
+
+        // Fetch associated artist profile
+        const { data: artistProfiles, error: errArtist } = await supabase
+          .from("artists")
+          .select("artist_id, name, slug")
+          .eq("user_id", foundUser.user_id);
+
+        if (errArtist) throw errArtist;
+        const artistProfile = artistProfiles?.[0];
+        if (!artistProfile) {
+          throw new Error("Artist profile not found. Please contact administration.");
         }
 
         localStorage.removeItem("viewer_id");
         localStorage.removeItem("viewer_name");
-        localStorage.setItem("artist_id", data.artist_id);
-        localStorage.setItem("artist_name", data.name);
+        localStorage.removeItem("is_admin");
+        localStorage.setItem("artist_id", artistProfile.artist_id);
+        localStorage.setItem("artist_name", artistProfile.name);
 
         router.push("/dashboard");
       } else {
         if (!name.trim()) throw new Error("Name is required");
         if (!username.trim()) throw new Error("Username is required");
         if (username.length < 3) throw new Error("Username must be at least 3 characters");
+        if (password.length < 4) throw new Error("Password must be at least 4 characters");
         if (!biography.trim()) throw new Error("Biography is required");
         if (fileError) throw new Error(fileError);
 
-        // 1. Upload Profile Image if provided
-        let uploadedImageUrl = "";
-        if (profileFile) {
-          const formData = new FormData();
-          formData.append("file", profileFile);
-          const uploadRes = await fetch("/api/upload", {
-            method: "POST",
-            body: formData,
-          });
-          const uploadData = await uploadRes.json();
-          if (!uploadRes.ok) throw new Error(uploadData.error || "Image upload failed");
-          uploadedImageUrl = uploadData.url;
+        // Check if email already exists
+        const { data: existingEmails, error: errEmail } = await supabase
+          .from("users")
+          .select("user_id")
+          .eq("email", email.trim().toLowerCase());
+
+        if (errEmail) throw errEmail;
+        if (existingEmails && existingEmails.length > 0) {
+          throw new Error("Email already registered. Please sign in!");
         }
 
-        // 2. Submit Registration Data
-        const res = await fetch("/api/auth/register-artist", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        // Check if username already exists
+        const { data: existingUsernames, error: errUser } = await supabase
+          .from("users")
+          .select("user_id")
+          .eq("username", username.trim().toLowerCase());
+
+        if (errUser) throw errUser;
+        if (existingUsernames && existingUsernames.length > 0) {
+          throw new Error("Username already taken. Please choose another!");
+        }
+
+        // 1. Upload Profile Image if provided
+        let uploadedImageUrl = "/artists/leonardo.jpg"; // Premium default placeholder
+        if (profileFile) {
+          try {
+            const fileExt = profileFile.name.split(".").pop();
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+            const filePath = `uploads/${fileName}`;
+
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from("gallery")
+              .upload(filePath, profileFile, {
+                cacheControl: "3600",
+                upsert: true,
+              });
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+              .from("gallery")
+              .getPublicUrl(filePath);
+
+            uploadedImageUrl = publicUrl;
+          } catch (uploadErr) {
+            console.error("Storage upload failed, falling back to default:", uploadErr);
+          }
+        }
+
+        // 2. Insert into users table
+        const { data: userData, error: errInsertUser } = await supabase
+          .from("users")
+          .insert({
             name: name.trim(),
-            username: username.trim(),
-            email: email.trim(),
-            biography: biography.trim(),
-            country: country.trim(),
-            profile_image: uploadedImageUrl,
-          }),
+            username: username.trim().toLowerCase(),
+            email: email.trim().toLowerCase(),
+            password_hash: password.trim(),
+            role: "artist",
+          })
+          .select("user_id")
+          .single();
+
+        if (errInsertUser) throw errInsertUser;
+
+        // 3. Generate slug from name
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+
+        // 4. Insert into artists table
+        const { error: errInsertArtist } = await supabase.from("artists").insert({
+          user_id: userData.user_id,
+          name: name.trim(),
+          slug: slug,
+          biography: biography.trim(),
+          country: country.trim(),
+          profile_image: uploadedImageUrl,
         });
 
-        const data = await res.json();
+        if (errInsertArtist) throw errInsertArtist;
 
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to register");
-        }
-
-        alert("Registered successfully! Please login now.");
+        alert("Registered successfully as an artist! Please sign in now.");
         setIsLogin(true);
         setName("");
         setUsername("");
+        setPassword("");
         setBiography("");
         setCountry("");
         setProfileFile(null);
@@ -183,6 +257,19 @@ export default function AuthPage() {
             {emailTouched && !isEmailValid && email && (
               <p className="text-xs text-red-400 mt-1">Please enter a valid email address</p>
             )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium mb-1 tracking-wider text-gray-400">PASSWORD *</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-transparent border-b border-gray-600 focus:border-amber-50 p-2.5 outline-none transition-colors"
+              placeholder="••••••••"
+              minLength={4}
+            />
           </div>
 
           {!isLogin && (
@@ -264,3 +351,4 @@ export default function AuthPage() {
     </div>
   );
 }
+

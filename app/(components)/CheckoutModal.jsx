@@ -14,13 +14,24 @@ export default function CheckoutModal({ artwork, onClose, onSuccess }) {
       // Simulate payment delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Update artwork status to Sold in Supabase
-      const { error } = await supabase
+      // 1. Insert order record in Supabase
+      const { error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          artwork_id: artwork.artwork_id,
+          buyer_name: name.trim(),
+          shipping_address: address.trim(),
+        });
+
+      if (orderError) throw orderError;
+
+      // 2. Update artwork status to Sold in Supabase
+      const { error: artworkError } = await supabase
         .from("artworks")
         .update({ is_sold: true })
         .eq("artwork_id", artwork.artwork_id);
 
-      if (error) throw error;
+      if (artworkError) throw artworkError;
 
       onSuccess(artwork.artwork_id);
     } catch (err) {
