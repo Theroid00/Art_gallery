@@ -66,8 +66,9 @@ export default function ViewerAuthPage() {
         localStorage.setItem("viewer_name", foundUser.name);
         localStorage.setItem("is_admin", foundUser.role === "admin" ? "true" : "false");
 
-        // Redirect to the correct GitHub Pages subdirectory!
-        window.location.href = "/Art_gallery/";
+        // Redirect to the correct subdirectory or root domain!
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+        window.location.href = basePath ? `${basePath}/` : "/";
       } else {
         if (!name.trim()) { throw new Error("Name is required"); }
         if (!username.trim()) { throw new Error("Username is required"); }

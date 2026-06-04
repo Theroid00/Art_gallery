@@ -33,7 +33,8 @@ export default function Header() {
     localStorage.removeItem("viewer_id");
     localStorage.removeItem("viewer_name");
     localStorage.removeItem("is_admin");
-    window.location.href = "/Art_gallery/";
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+    window.location.href = basePath ? `${basePath}/` : "/";
   };
 
   const closeMobile = () => setMobileOpen(false);
