@@ -3,14 +3,22 @@ import Review from "../../(components)/Review.jsx";
 import Donations from "../../(components)/Donations.jsx";
 import PurchaseButton from "../../(components)/PurchaseButton.jsx";
 import Image from "next/image";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
+import { getAssetUrl } from "@/lib/utils";
+
+export async function generateStaticParams() {
+  const { data: artists } = await supabase.from("artists").select("slug");
+  return (artists || []).map((artist) => ({
+    slug: artist.slug,
+  }));
+}
 
 export default async function ArtistProfile({ params }) {
   const { slug } = await params;
 
-  // Directly query the database from the Server Component for blazing fast, prod-ready data
-  const [artists] = await db.query("SELECT * FROM artists WHERE slug = ?", [slug]);
-  const artist = artists[0];
+  // Query live artist from Supabase
+  const { data: artists } = await supabase.from("artists").select("*").eq("slug", slug);
+  const artist = artists?.[0];
 
   if (!artist) {
     return (
@@ -20,10 +28,14 @@ export default async function ArtistProfile({ params }) {
     );
   }
 
-  const [artworks] = await db.query(
-    "SELECT * FROM artworks WHERE artist_id = ? ORDER BY created_at DESC",
-    [artist.artist_id]
-  );
+  // Query live artworks for this artist
+  const { data: artworksRaw } = await supabase
+    .from("artworks")
+    .select("*")
+    .eq("artist_id", artist.artist_id)
+    .order("created_at", { ascending: false });
+
+  const artworks = artworksRaw || [];
 
   return (
     <div className="bg-black">
@@ -36,7 +48,7 @@ export default async function ArtistProfile({ params }) {
           playsInline
           className="absolute top-0 left-0 w-full h-full object-cover"
         >
-          <source src="/assets/videos/bb.mp4" type="video/mp4" />
+          <source src={getAssetUrl("/assets/videos/bb.mp4")} type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
         <h1 className="px-4 sm:px-6 text-4xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl pb-2 text-amber-50 font-display tracking-widest text-center whitespace-nowrap absolute bottom-0 w-full overflow-hidden text-ellipsis">
@@ -50,7 +62,7 @@ export default async function ArtistProfile({ params }) {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-6 items-start rounded-2xl bg-amber-50/10 max-w-5xl w-full overflow-hidden">
             <div className="md:col-span-1">
               <Image
-                src={artist.profile_image}
+                src={getAssetUrl(artist.profile_image)}
                 alt={artist.name}
                 width={200}
                 height={200}
@@ -92,7 +104,7 @@ export default async function ArtistProfile({ params }) {
                   {/* Artwork Image */}
                   <div className="relative w-full h-64 sm:h-72 md:h-80 lg:h-96">
                     <Image
-                      src={item.image_url}
+                      src={getAssetUrl(item.image_url)}
                       alt={item.title}
                       fill
                       unoptimized={true}

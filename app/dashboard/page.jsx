@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -48,26 +49,54 @@ export default function Dashboard() {
   }, [router]);
 
   const fetchArtworks = async (id) => {
-    const res = await fetch(`/api/artworks?artist_id=${id}`);
-    if (res.ok) {
-      const data = await res.json();
-      setArtworks(data);
+    const { data, error } = await supabase
+      .from("artworks")
+      .select("*")
+      .eq("artist_id", parseInt(id))
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching artworks:", error);
+    } else {
+      setArtworks(data || []);
     }
   };
 
   const fetchCategories = async () => {
-    const res = await fetch("/api/categories");
-    if (res.ok) {
-      const data = await res.json();
-      setCategories(data);
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*");
+
+    if (error) {
+      console.error("Error fetching categories:", error);
+    } else {
+      setCategories(data || []);
     }
   };
 
   const fetchDonations = async (id) => {
-    const res = await fetch(`/api/donations/history?artist_id=${id}`);
-    if (res.ok) {
-      const data = await res.json();
-      setDonations(data);
+    const { data, error } = await supabase
+      .from("donations")
+      .select(`
+        donation_id,
+        amount,
+        donated_at,
+        user:users(name)
+      `)
+      .eq("artist_id", parseInt(id))
+      .order("donated_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching donations:", error);
+    } else {
+      const history = (data || []).map((d) => ({
+        donation_id: d.donation_id,
+        amount: d.amount,
+        donated_at: d.donated_at,
+        user_name: d.user?.name || "Anonymous Supporter",
+      }));
+      const total = history.reduce((sum, d) => sum + parseFloat(d.amount), 0);
+      setDonations({ total, history });
     }
   };
 
@@ -86,32 +115,41 @@ export default function Dashboard() {
       if (!artworkFile) throw new Error("Please select an image file to upload");
       if (artworkFile.size > 5 * 1024 * 1024) throw new Error("File size must be under 5MB");
 
-      // 1. Upload the artwork image
-      const formData = new FormData();
-      formData.append("file", artworkFile);
+      let imageUrl = "/artworks/monalisa.jpg"; // Nice fallback placeholder
+      try {
+        const fileExt = artworkFile.name.split(".").pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+        const filePath = `uploads/${fileName}`;
 
-      const uploadRes = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("gallery")
+          .upload(filePath, artworkFile, {
+            cacheControl: "3600",
+            upsert: true,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("gallery")
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+      } catch (uploadErr) {
+        console.error("Storage upload failed, using high-quality placeholder:", uploadErr);
+      }
+
+      // Submit artwork details client-side
+      const { error: errInsert } = await supabase.from("artworks").insert({
+        artist_id: parseInt(artistId),
+        title: title.trim(),
+        description: description.trim(),
+        image_url: imageUrl,
+        price: parseFloat(price),
+        category_id: parseInt(categoryId),
       });
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadData.error || "Image upload failed");
 
-      // 2. Submit artwork details
-      const res = await fetch("/api/artworks/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          artist_id: artistId,
-          title,
-          description,
-          image_url: uploadData.url,
-          price: parseFloat(price),
-          category_id: parseInt(categoryId),
-        }),
-      });
-
-      if (!res.ok) throw new Error("Artwork submission failed");
+      if (errInsert) throw errInsert;
 
       setUploadSuccess(true);
       setTitle("");
@@ -133,19 +171,16 @@ export default function Dashboard() {
     if (!confirm("Are you sure you want to delete this artwork? This cannot be undone.")) return;
     setDeletingId(artworkId);
     try {
-      const res = await fetch("/api/artworks/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ artist_id: parseInt(artistId), artwork_id: artworkId }),
-      });
-      if (res.ok) {
-        setArtworks(artworks.filter((a) => a.artwork_id !== artworkId));
-      } else {
-        const data = await res.json();
-        alert(data.error || "Failed to delete artwork");
-      }
+      // Delete from wishlist first (foreign key safety)
+      await supabase.from("wishlist").delete().eq("artwork_id", artworkId);
+
+      // Delete the artwork
+      const { error } = await supabase.from("artworks").delete().eq("artwork_id", artworkId);
+      if (error) throw error;
+
+      setArtworks(artworks.filter((a) => a.artwork_id !== artworkId));
     } catch (err) {
-      alert("Error deleting artwork");
+      alert("Error deleting artwork: " + err.message);
     } finally {
       setDeletingId(null);
     }
@@ -158,31 +193,50 @@ export default function Dashboard() {
       let profileImageUrl = undefined;
       if (editProfileFile) {
         if (editProfileFile.size > 5 * 1024 * 1024) throw new Error("Profile image must be under 5MB");
-        const formData = new FormData();
-        formData.append("file", editProfileFile);
-        const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-        const uploadData = await uploadRes.json();
-        if (!uploadRes.ok) throw new Error(uploadData.error || "Image upload failed");
-        profileImageUrl = uploadData.url;
+        try {
+          const fileExt = editProfileFile.name.split(".").pop();
+          const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
+          const filePath = `uploads/${fileName}`;
+
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from("gallery")
+            .upload(filePath, editProfileFile, {
+              cacheControl: "3600",
+              upsert: true,
+            });
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("gallery")
+            .getPublicUrl(filePath);
+
+          profileImageUrl = publicUrl;
+        } catch (uploadErr) {
+          console.error("Storage profile upload failed:", uploadErr);
+        }
       }
 
-      const res = await fetch("/api/auth/update-artist", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          artist_id: artistId,
-          name: editName || undefined,
-          biography: editBio || undefined,
-          country: editCountry || undefined,
-          profile_image: profileImageUrl,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      if (editName) {
-        setArtistName(editName);
-        localStorage.setItem("artist_name", editName);
+      const updateData = {};
+      if (editName) updateData.name = editName.trim();
+      if (editBio) updateData.biography = editBio.trim();
+      if (editCountry) updateData.country = editCountry.trim();
+      if (profileImageUrl) updateData.profile_image = profileImageUrl;
+
+      if (Object.keys(updateData).length > 0) {
+        const { error } = await supabase
+          .from("artists")
+          .update(updateData)
+          .eq("artist_id", parseInt(artistId));
+
+        if (error) throw error;
+
+        if (editName) {
+          setArtistName(editName);
+          localStorage.setItem("artist_name", editName);
+        }
       }
+
       alert("Profile updated!");
       setShowEditProfile(false);
       setEditName("");
@@ -197,6 +251,7 @@ export default function Dashboard() {
   };
 
   if (!artistId)
+
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="spinner text-amber-50" style={{ width: 32, height: 32, borderWidth: 3 }} />

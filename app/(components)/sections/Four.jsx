@@ -7,6 +7,8 @@ import "swiper/css";
 import "swiper/css/autoplay";
 import "swiper/css/navigation";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+import { getAssetUrl } from "@/lib/utils";
 
 export default function Four() {
   const swiperRef = useRef(null);
@@ -14,9 +16,14 @@ export default function Four() {
   const [swiperInstance, setSwiperInstance] = useState(null);
 
   useEffect(() => {
-    fetch("/api/artists")
-      .then((res) => res.json())
-      .then((data) => setArtists(data));
+    async function loadArtists() {
+      const { data } = await supabase
+        .from("artists")
+        .select("*")
+        .order("artist_id", { ascending: false });
+      if (data) setArtists(data);
+    }
+    loadArtists();
   }, []);
 
   return (
@@ -63,7 +70,7 @@ export default function Four() {
                 <Link href={`/artists/${item.slug}`}>
                   <div className="cursor-pointer h-[200px] sm:h-[250px] md:h-[300px] overflow-hidden rounded-lg">
                     <Image
-                      src={item.profile_image}
+                      src={getAssetUrl(item.profile_image)}
                       alt={item.name}
                       width={400}
                       height={400}

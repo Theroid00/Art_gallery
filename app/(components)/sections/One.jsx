@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { getAssetUrl } from "@/lib/utils";
 
 export default function One() {
   const [loaded, setLoaded] = useState(false);
@@ -20,7 +21,7 @@ export default function One() {
         playsInline
         className="absolute top-0 left-0 w-full h-full object-cover"
       >
-        <source src="/assets/videos/one.mp4" type="video/mp4" />
+        <source src={getAssetUrl("/assets/videos/one.mp4")} type="video/mp4" />
       </video>
 
       {/* Gradient Overlays */}

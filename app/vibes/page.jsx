@@ -1,21 +1,13 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Wishlist from "../(components)/Wish.jsx";
+import worldArtData from "@/lib/data/world_art.json";
+import { getAssetUrl } from "@/lib/utils";
 
 export default function Vibes() {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/world_arts")
-      .then((res) => res.json())
-      .then((d) => {
-        setData(d);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+  const [data, setData] = useState(() => worldArtData);
+  const [loading, setLoading] = useState(false);
 
   const groupedArt = data.reduce((acc, item) => {
     if (!acc[item.country_name]) acc[item.country_name] = [];
@@ -69,7 +61,7 @@ export default function Vibes() {
               >
                 <div className="relative overflow-hidden w-full h-64">
                   <Image
-                    src={art.image_url}
+                    src={getAssetUrl(art.image_url)}
                     alt={art.title}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"

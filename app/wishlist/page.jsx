@@ -1,6 +1,9 @@
 "use client";
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+import { getAssetUrl } from "@/lib/utils";
 
 export default function WishlistPage() {
   const [data, setData] = useState([]);
@@ -15,16 +18,89 @@ export default function WishlistPage() {
       return;
     }
 
-    fetch(`/api/wishlist?user_id=${vId}`)
-      .then((res) => res.json())
-      .then((json) => {
-        setData(json);
+    async function loadWishlist() {
+      try {
+        // 1. Fetch wishlist from Supabase
+        const { data: wishlistItems, error: errWish } = await supabase
+          .from("wishlist")
+          .select("artwork_id")
+          .eq("user_id", parseInt(vId));
+
+        if (errWish) throw errWish;
+        if (!wishlistItems || wishlistItems.length === 0) {
+          setData([]);
+          setLoading(false);
+          return;
+        }
+
+        // 2. Fetch all references in parallel to map
+        const { data: artworks } = await supabase.from("artworks").select("artwork_id, title, image_url");
+        const { data: categories } = await supabase.from("categories").select("category_id, name, image_url_1, image_url_2, image_url_3");
+        const { data: worldArt } = await supabase.from("world_art").select("art_id, title, image_url");
+
+        const resolved = wishlistItems.map((item) => {
+          const id = item.artwork_id;
+          let title = "Curated Piece";
+          let image = "";
+
+          // Check artworks
+          const artwork = artworks?.find((a) => a.artwork_id === id);
+          if (artwork) {
+            title = artwork.title;
+            image = artwork.image_url;
+          } else {
+            // Check categories (direct)
+            const catDirect = categories?.find((c) => c.category_id === id);
+            if (catDirect) {
+              title = catDirect.name;
+              image = catDirect.image_url_1;
+            } else {
+              // Check categories c1 (shifted +1,000,000)
+              const catC1 = categories?.find((c) => c.category_id === id - 1000000);
+              if (catC1) {
+                title = catC1.name;
+                image = catC1.image_url_1;
+              } else {
+                // Check categories c2 (shifted +2,000,000)
+                const catC2 = categories?.find((c) => c.category_id === id - 2000000);
+                if (catC2) {
+                  title = catC2.name;
+                  image = catC2.image_url_2;
+                } else {
+                  // Check categories c3 (shifted +3,000,000)
+                  const catC3 = categories?.find((c) => c.category_id === id - 3000000);
+                  if (catC3) {
+                    title = catC3.name;
+                    image = catC3.image_url_3;
+                  } else {
+                    // Check world art (shifted +100,000)
+                    const wa = worldArt?.find((w) => w.art_id === id - 100000);
+                    if (wa) {
+                      title = wa.title;
+                      image = wa.image_url;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          return {
+            artwork_id: id,
+            title,
+            image,
+          };
+        });
+
+        setData(resolved);
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Fetch error", err);
+      } catch (err) {
+        console.error("Error loading wishlist:", err);
         setLoading(false);
-      });
+      }
+    }
+
+    loadWishlist();
   }, []);
 
   const removeWishlist = async (artwork_id) => {
@@ -32,17 +108,15 @@ export default function WishlistPage() {
       const vId = localStorage.getItem("viewer_id");
       if (!vId) return;
 
-      const res = await fetch("/api/wishlist", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: parseInt(vId),
-          artwork_id: artwork_id,
-        }),
-      });
-      if (res.ok) {
-        setData(data.filter((item) => item.artwork_id !== artwork_id));
-      }
+      const { error } = await supabase
+        .from("wishlist")
+        .delete()
+        .eq("user_id", parseInt(vId))
+        .eq("artwork_id", artwork_id);
+
+      if (error) throw error;
+
+      setData(data.filter((item) => item.artwork_id !== artwork_id));
     } catch (error) {
       console.error("Error removing from wishlist", error);
     }
@@ -68,12 +142,12 @@ export default function WishlistPage() {
           <p className="text-gray-400 text-lg mb-8 max-w-md text-center">
             Sign in to save your favorite masterpieces and build your personal collection.
           </p>
-          <a
+          <Link
             href="/login"
             className="py-3 px-8 bg-amber-50 text-black font-bold uppercase tracking-widest rounded-xl hover:bg-amber-200 transition-colors"
           >
             Sign In
-          </a>
+          </Link>
         </div>
       ) : data.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 text-white animate-fade-in-up">
@@ -82,12 +156,12 @@ export default function WishlistPage() {
           <p className="text-gray-400 text-lg mb-8 max-w-md text-center">
             Start exploring and add artworks you love to your wishlist.
           </p>
-          <a
+          <Link
             href="/world"
             className="py-3 px-8 bg-amber-50 text-black font-bold uppercase tracking-widest rounded-xl hover:bg-amber-200 transition-colors"
           >
             Explore Art
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="animate-fade-in">
@@ -111,7 +185,7 @@ export default function WishlistPage() {
               >
                 <div className="relative w-full h-72 bg-zinc-900 overflow-hidden">
                   <Image
-                    src={item.image || "/file.svg"}
+                    src={getAssetUrl(item.image) || getAssetUrl("/file.svg")}
                     alt={item.title || "Artwork"}
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-700"

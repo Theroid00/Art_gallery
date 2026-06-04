@@ -1,0 +1,110 @@
+[
+  {
+    "category_id": 1,
+    "name": "Painting",
+    "slug": "painting",
+    "description": "Traditional art using paint on surfaces.",
+    "image_url_1": "/categories/painting1.jpg",
+    "image_url_2": "/categories/painting2.jpg",
+    "image_url_3": "/categories/painting3.jpg"
+  },
+  {
+    "category_id": 2,
+    "name": "Sculpture",
+    "slug": "sculpture",
+    "description": "Three-dimensional art made from materials like stone or metal.",
+    "image_url_1": "/categories/sculpture1.jpg",
+    "image_url_2": "/categories/sculpture2.jpg",
+    "image_url_3": "/categories/sculpture3.jpg"
+  },
+  {
+    "category_id": 3,
+    "name": "Digital Art",
+    "slug": "digital-art",
+    "description": "Art created using digital tools and software.",
+    "image_url_1": "/categories/digital1.jpg",
+    "image_url_2": "/categories/digital2.jpg",
+    "image_url_3": "/categories/digital3.jpg"
+  },
+  {
+    "category_id": 4,
+    "name": "Photography",
+    "slug": "photography",
+    "description": "Capturing moments using cameras and visual techniques.",
+    "image_url_1": "/categories/photography1.jpg",
+    "image_url_2": "/categories/photography2.jpg",
+    "image_url_3": "/categories/photography3.jpg"
+  },
+  {
+    "category_id": 5,
+    "name": "Renaissance",
+    "slug": "renaissance",
+    "description": "A classical art movement focusing on realism and humanism.",
+    "image_url_1": "/categories/renaissance1.jpg",
+    "image_url_2": "/categories/renaissance2.jpg",
+    "image_url_3": "/categories/renaissance3.jpg"
+  },
+  {
+    "category_id": 6,
+    "name": "Post-Impressionism",
+    "slug": "post-impressionism",
+    "description": "Art focusing on structure and emotional expression.",
+    "image_url_1": "/categories/postimp1.jpg",
+    "image_url_2": "/categories/postimp2.jpg",
+    "image_url_3": "/categories/postimp3.jpg"
+  },
+  {
+    "category_id": 7,
+    "name": "Cubism",
+    "slug": "cubism",
+    "description": "Art style using geometric shapes and fragmented objects.",
+    "image_url_1": "/categories/cubism1.jpg",
+    "image_url_2": "/categories/cubism2.jpg",
+    "image_url_3": "/categories/cubism3.jpg"
+  },
+  {
+    "category_id": 8,
+    "name": "Surrealism",
+    "slug": "surrealism",
+    "description": "Dream-like visuals and imaginative concepts.",
+    "image_url_1": "/categories/surrealism1.jpg",
+    "image_url_2": "/categories/surrealism2.jpg",
+    "image_url_3": "/categories/surrealism3.jpg"
+  },
+  {
+    "category_id": 9,
+    "name": "Impressionism",
+    "slug": "impressionism",
+    "description": "Focus on light, color, and everyday scenes.",
+    "image_url_1": "/categories/impressionism1.jpg",
+    "image_url_2": "/categories/impressionism2.jpg",
+    "image_url_3": "/categories/impressionism3.jpg"
+  },
+  {
+    "category_id": 10,
+    "name": "Modern Art",
+    "slug": "modern-art",
+    "description": "Art that breaks traditional boundaries and explores new ideas.",
+    "image_url_1": "/categories/modern1.jpg",
+    "image_url_2": "/categories/modern2.jpg",
+    "image_url_3": "/categories/modern3.jpg"
+  },
+  {
+    "category_id": 11,
+    "name": "Street Art",
+    "slug": "street-art",
+    "description": "Urban art found in public spaces like graffiti.",
+    "image_url_1": "/categories/street1.jpg",
+    "image_url_2": "/categories/street2.jpg",
+    "image_url_3": "/categories/street3.jpg"
+  },
+  {
+    "category_id": 12,
+    "name": "Pop Art",
+    "slug": "pop-art",
+    "description": "Art inspired by popular culture and mass media.",
+    "image_url_1": "/categories/pop1.jpg",
+    "image_url_2": "/categories/pop2.jpg",
+    "image_url_3": "/categories/pop3.jpg"
+  }
+]

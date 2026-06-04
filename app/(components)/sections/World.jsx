@@ -3,6 +3,7 @@ import { FaChevronCircleRight } from "react-icons/fa";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { getAssetUrl } from "@/lib/utils";
 
 export default function World({ setMode }) {
   const ref = useRef(null);
@@ -34,7 +35,7 @@ export default function World({ setMode }) {
         <div className="flex flex-col sm:flex-row justify-center gap-4 md:gap-8 lg:gap-10 mt-8">
           <div className="relative w-full sm:w-1/2 aspect-[4/3] overflow-hidden rounded-xl">
             <Image
-              src="/assets/images/greek.jpg"
+              src={getAssetUrl("/assets/images/greek.jpg")}
               alt="Greek Art"
               fill
               className="object-cover hover:scale-105 transition duration-700"
@@ -42,7 +43,7 @@ export default function World({ setMode }) {
           </div>
           <div className="relative w-full sm:w-1/2 aspect-[4/3] overflow-hidden rounded-xl">
             <Image
-              src="/assets/images/madhubani.jpg"
+              src={getAssetUrl("/assets/images/madhubani.jpg")}
               alt="Madhubani Painting"
               fill
               className="object-cover hover:scale-105 transition duration-700"

@@ -1,0 +1,98 @@
+[
+  {
+    "art_id": 4,
+    "country_id": 2,
+    "title": "The Sphinx",
+    "image_url": "/art/egypt1.jpg",
+    "era": "Old Kingdom",
+    "country_name": "Egypt"
+  },
+  {
+    "art_id": 5,
+    "country_id": 2,
+    "title": "Tutankhamun Mask",
+    "image_url": "/art/egypt2.jpg",
+    "era": "18th Dynasty",
+    "country_name": "Egypt"
+  },
+  {
+    "art_id": 6,
+    "country_id": 2,
+    "title": "Bust of Nefertiti",
+    "image_url": "/art/egypt3.jpg",
+    "era": "Amarna Period",
+    "country_name": "Egypt"
+  },
+  {
+    "art_id": 13,
+    "country_id": 6,
+    "title": "Liberty Leading the People",
+    "image_url": "/art/france1.jpg",
+    "era": "Romanticism (1830)",
+    "country_name": "France"
+  },
+  {
+    "art_id": 14,
+    "country_id": 6,
+    "title": "The Thinker",
+    "image_url": "/art/france2.jpg",
+    "era": "Modern Era (1904)",
+    "country_name": "France"
+  },
+  {
+    "art_id": 15,
+    "country_id": 6,
+    "title": "Water Lilies",
+    "image_url": "/art/france3.jpg",
+    "era": "Impressionism (1920)",
+    "country_name": "France"
+  },
+  {
+    "art_id": 10,
+    "country_id": 5,
+    "title": "Dancing Girl of Mohenjo-daro",
+    "image_url": "/art/india1.jpg",
+    "era": "Indus Valley Civilization",
+    "country_name": "India"
+  },
+  {
+    "art_id": 11,
+    "country_id": 5,
+    "title": "Ajanta Cave Paintings",
+    "image_url": "/art/india2.jpg",
+    "era": "2nd Century BCE",
+    "country_name": "India"
+  },
+  {
+    "art_id": 12,
+    "country_id": 5,
+    "title": "Radha Bani Thani",
+    "image_url": "/art/india3.jpg",
+    "era": "18th Century (Rajput)",
+    "country_name": "India"
+  },
+  {
+    "art_id": 1,
+    "country_id": 1,
+    "title": "The Great Wave",
+    "image_url": "/art/japan1.jpg",
+    "era": "Edo",
+    "country_name": "Japan"
+  },
+  {
+    "art_id": 2,
+    "country_id": 1,
+    "title": "Kinkaku-ji Temple",
+    "image_url": "/art/japan2.jpg",
+    "era": "Muromachi",
+    "country_name": "Japan"
+  },
+  {
+    "art_id": 3,
+    "country_id": 1,
+    "title": "Samurai Armor",
+    "image_url": "/art/japan3.jpg",
+    "era": "Sengoku",
+    "country_name": "Japan"
+  }
+]

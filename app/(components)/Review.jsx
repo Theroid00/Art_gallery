@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function Review({ artistId }) {
   const [review, setReview] = useState([]);
@@ -7,20 +8,29 @@ export default function Review({ artistId }) {
   const [rating, setRating] = useState(5);
 
   const fetchReviews = async () => {
-    const res = await fetch(`/api/review?artist_id=${artistId}`);
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error(`Server Error (${res.status}):`, errorText);
-      try {
-        const errorData = JSON.parse(errorText);
-        console.error("Parsed API Error:", errorData);
-      } catch (e) {
-        console.error("Server sent non-JSON error (likely a 500 crash page)");
-      }
-      return;
+    // Query live reviews with user names resolved from the joined users table
+    const { data, error } = await supabase
+      .from("artist_reviews")
+      .select(`
+        review_id,
+        artist_id,
+        rating,
+        comment,
+        created_at,
+        user:users(name)
+      `)
+      .eq("artist_id", artistId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+    } else if (data) {
+      const reviews = data.map((item) => ({
+        ...item,
+        user_name: item.user?.name || "Anonymous Collector",
+      }));
+      setReview(reviews);
     }
-    const data = await res.json();
-    setReview(data);
   };
 
   useEffect(() => {
@@ -35,18 +45,20 @@ export default function Review({ artistId }) {
       return;
     }
 
-    await fetch("/api/review", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        artist_id: artistId,
-        user_id: parseInt(viewer_id),
-        rating: rating,
-        comment: comment,
-      }),
+    const { error } = await supabase.from("artist_reviews").insert({
+      artist_id: artistId,
+      user_id: parseInt(viewer_id),
+      rating: rating,
+      comment: comment,
     });
-    setComment("");
-    fetchReviews();
+
+    if (error) {
+      console.error(error);
+      alert(`Failed to submit review: ${error.message} (Code: ${error.code})`);
+    } else {
+      setComment("");
+      fetchReviews();
+    }
   };
 
   return (

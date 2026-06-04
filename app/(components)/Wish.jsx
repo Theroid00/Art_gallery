@@ -1,4 +1,6 @@
 "use client";
+import { supabase } from "@/lib/supabase";
+
 export default function Wishlist({artworkId})
 {
 const handleWishlist=async()=>{
@@ -9,16 +11,32 @@ const handleWishlist=async()=>{
        return;
     }
     
-    await fetch("/api/wishlist",{
-     method: "POST",
-     body:JSON.stringify({
+    // Check if item is already in wishlist
+    const { data: existing, error: errCheck } = await supabase
+      .from("wishlist")
+      .select("*")
+      .eq("user_id", parseInt(viewer_id))
+      .eq("artwork_id", artworkId);
+
+    if (errCheck) throw errCheck;
+
+    if (existing && existing.length > 0) {
+      alert("This item is already in your wishlist!");
+      return;
+    }
+
+    // Insert live wishlist record
+    const { error: errInsert } = await supabase.from("wishlist").insert({
       user_id: parseInt(viewer_id),
-      artwork_id:artworkId,
-     }),
+      artwork_id: artworkId,
     });
-    alert ("Added to wishlist");
+
+    if (errInsert) throw errInsert;
+
+    alert("Added to wishlist!");
   } catch (error){
-    console.error("Error")
+    console.error("Wishlist Error:", error);
+    alert("Failed to add to wishlist: " + (error.message || error));
   }
 };
    return (

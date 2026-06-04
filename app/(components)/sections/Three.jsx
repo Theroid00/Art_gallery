@@ -6,6 +6,7 @@ import Image from "next/image";
 import "swiper/css";
 import "swiper/css/autoplay";
 import Link from "next/link";
+import { getAssetUrl } from "@/lib/utils";
 
 export default function Three(){
 
@@ -14,33 +15,33 @@ export default function Three(){
   {
     id:1,
     title:"Art1",
-    source:"/assets/images/ll1.jpg",
+    source: getAssetUrl("/assets/images/ll1.jpg"),
    
 
   },
   { id:2,
     title:"Art2",
-    source:"/assets/images/ll2.jpg",
+    source: getAssetUrl("/assets/images/ll2.jpg"),
    
 },
 { id:3,
     title:"Art3",
-    source:"/assets/images/ll3.jpg",
+    source: getAssetUrl("/assets/images/ll3.jpg"),
   
 },
 { id:4,
     title:"Art4",
-    source:"/assets/images/ll4.jpg",
+    source: getAssetUrl("/assets/images/ll4.jpg"),
    
 },
 { id:5,
     title:"Art3",
-    source:"/assets/images/ll5.jpg",
+    source: getAssetUrl("/assets/images/ll5.jpg"),
   
 },
 { id:6,
     title:"Art4",
-    source:"/assets/images/swan.jpg",
+    source: getAssetUrl("/assets/images/swan.jpg"),
    
 },
 ];

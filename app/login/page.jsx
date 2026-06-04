@@ -1,7 +1,8 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { hashPassword } from "@/lib/utils";
 
 export default function ViewerAuthPage() {
   const router = useRouter();
@@ -11,6 +12,7 @@ export default function ViewerAuthPage() {
 
   // Form State
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
 
@@ -27,50 +29,93 @@ export default function ViewerAuthPage() {
       return;
     }
 
+    if (!password.trim()) {
+      setError("Password is required");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       if (isLogin) {
-        const res = await fetch("/api/auth/login-viewer", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
+        // Query live Supabase users table
+        const { data: foundUsers, error: errQuery } = await supabase
+          .from("users")
+          .select("*")
+          .eq("email", email.trim().toLowerCase())
+          .neq("role", "artist"); // Don't allow artists to login as viewers
 
-        const data = await res.json();
+        if (errQuery) throw errQuery;
 
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to login");
+        const foundUser = foundUsers?.[0];
+
+        if (!foundUser) {
+          throw new Error("No user found with this email. Feel free to Join the Gallery by registering!");
+        }
+
+        // Verify password hash (supports both SHA-256 and plaintext for backward compatibility)
+        const enteredHash = await hashPassword(password.trim());
+        const isMatch = (foundUser.password_hash === enteredHash) || (foundUser.password_hash === password.trim());
+        if (!isMatch) {
+          throw new Error("Incorrect password. Please try again.");
         }
 
         localStorage.removeItem("artist_id");
         localStorage.removeItem("artist_name");
-        localStorage.setItem("viewer_id", data.user_id);
-        localStorage.setItem("viewer_name", data.name);
-        localStorage.setItem("is_admin", data.is_admin ? "true" : "false");
+        localStorage.setItem("viewer_id", foundUser.user_id);
+        localStorage.setItem("viewer_name", foundUser.name);
+        localStorage.setItem("is_admin", foundUser.role === "admin" ? "true" : "false");
 
-        window.location.href = "/";
+        // Redirect to the correct subdirectory or root domain!
+        const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+        window.location.href = basePath ? `${basePath}/` : "/";
       } else {
         if (!name.trim()) { throw new Error("Name is required"); }
         if (!username.trim()) { throw new Error("Username is required"); }
         if (username.length < 3) { throw new Error("Username must be at least 3 characters"); }
+        if (password.length < 4) { throw new Error("Password must be at least 4 characters"); }
 
-        const res = await fetch("/api/auth/register-viewer", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: name.trim(), username: username.trim(), email: email.trim() }),
+        // Check if email already exists in Supabase
+        const { data: existingEmails, error: errEmail } = await supabase
+          .from("users")
+          .select("user_id")
+          .eq("email", email.trim().toLowerCase());
+
+        if (errEmail) throw errEmail;
+        if (existingEmails && existingEmails.length > 0) {
+          throw new Error("Email already registered. Please sign in!");
+        }
+
+        // Check if username already exists in Supabase
+        const { data: existingUsernames, error: errUser } = await supabase
+          .from("users")
+          .select("user_id")
+          .eq("username", username.trim().toLowerCase());
+
+        if (errUser) throw errUser;
+        if (existingUsernames && existingUsernames.length > 0) {
+          throw new Error("Username already taken. Please choose another one!");
+        }
+
+        // Hash the password securely client-side before inserting
+        const securePasswordHash = await hashPassword(password.trim());
+
+        // Insert new user into live users table
+        const { error: errInsert } = await supabase.from("users").insert({
+          name: name.trim(),
+          username: username.trim().toLowerCase(),
+          email: email.trim().toLowerCase(),
+          password_hash: securePasswordHash,
+          role: "user"
         });
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.error || "Failed to register");
-        }
+        if (errInsert) throw errInsert;
 
         alert("Welcome to the gallery! Registration successful. Please sign in now.");
         setIsLogin(true);
         setName("");
         setUsername("");
+        setPassword("");
       }
     } catch (err) {
       setError(err.message);
@@ -142,6 +187,19 @@ export default function ViewerAuthPage() {
             {emailTouched && !isEmailValid && email && (
               <p className="text-xs text-red-400 mt-1">Please enter a valid email address</p>
             )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium mb-1 tracking-wider text-gray-400">PASSWORD *</label>
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-transparent border-b border-gray-600 focus:border-amber-50 p-2.5 outline-none transition-colors"
+              placeholder="••••••••"
+              minLength={4}
+            />
           </div>
 
           <button

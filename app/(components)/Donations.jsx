@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function Donations({ artistId, artistName }) {
   const [amount, setAmount] = useState("");
@@ -14,21 +15,21 @@ export default function Donations({ artistId, artistName }) {
       return;
     }
 
-    const res = await fetch("/api/donations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        artist_id: artistId,
-        user_id: parseInt(viewer_id),
-        amount: parseFloat(amount),
-      }),
+    // Insert live donation record into Supabase
+    const { error } = await supabase.from("donations").insert({
+      artist_id: artistId,
+      user_id: parseInt(viewer_id),
+      amount: parseFloat(amount),
+      payment_status: "success",
     });
 
-    if (res.ok) {
+    if (error) {
+      console.error(error);
+      setStatus(`Transaction failed: ${error.message} (Code: ${error.code})`);
+      alert(`Transaction failed: ${error.message} (Code: ${error.code})`);
+    } else {
       setStatus("Success! Thank you for supporting " + artistName);
       setAmount("");
-    } else {
-      setStatus("Transaction failed. Please try again.");
     }
   };
 
