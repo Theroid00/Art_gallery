@@ -44,3 +44,7 @@ next-env.d.ts
 /report
 /report.zip
 *.zip
+
+# nested vaults / repos
+/Obsidian/
+/Obsidian
