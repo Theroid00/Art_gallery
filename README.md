@@ -1,4 +1,4 @@
-# 🏛️ Art Gallery
+# Art Gallery
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.1.6-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.3-61DAFB?style=flat&logo=react&logoColor=black)](https://react.dev/)
@@ -12,39 +12,39 @@ Designed for fluid digital exhibition, creator monetization, and art collection,
 
 ---
 
-## 🌟 Key Features
+## Key Features
 
-* **🎨 Immersive Exhibition**: Video hero sections, dynamic artwork showcases, and category collections spanning major art movements (Renaissance, Impressionism, Surrealism, Cubism, Pop Art, Modern Art, etc.).
-* **🧑‍🎨 Creator Studio (Artist Dashboard)**:
+* **Immersive Exhibition**: Video hero sections, dynamic artwork showcases, and category collections spanning major art movements (Renaissance, Impressionism, Surrealism, Cubism, Pop Art, Modern Art, etc.).
+* **Creator Studio (Artist Dashboard)**:
   * Portfolio management: publish and delete artworks with automatic cascade cleanup.
   * Live profile customization (biography, nationality, display name, and profile pictures).
   * Real-time donation tracking and supporter contribution history.
-* **🌍 Global Collections (`/vibes` & `/world`)**:
+* **Global Collections (`/vibes` & `/world`)**:
   * Country-indexed exhibitions showcasing cultural artifacts and historical masterworks across eras.
   * Interactive slide-out panels with high-resolution image galleries.
-* **💖 Unified Wishlist Engine**:
+* **Unified Wishlist Engine**:
   * Live database-backed personal collection bookmarking.
   * Composite ID resolution dynamically mapping saved items across individual artworks, category multi-image sets, and global cultural artifacts.
-* **☕ Artist Donations & Support**:
+* **Artist Donations & Support**:
   * Real-time supporter contributions with quick-select tiers (₹50, ₹100, ₹500, ₹1000) or custom amounts.
   * Live aggregation of total support directly on artist profiles.
-* **⭐ Collector Reviews & Ratings**:
+* **Collector Reviews & Ratings**:
   * 5-star rating system with real-time feedback submission.
   * Relational review author resolution from the database.
-* **💳 Interactive Checkout & Order Pipeline**:
+* **Interactive Checkout & Order Pipeline**:
   * Simulated instant checkout modal updating artwork availability status (`is_sold`).
   * Real-time record generation in the `orders` table.
-* **🛡️ Admin Command Center (`/admin`)**:
+* **Admin Command Center (`/admin`)**:
   * Aggregated platform metrics (total users, artists, artworks, donations, and reviews).
   * Tabular data management with live search across users, artworks, and customer orders.
   * Role-based user and artwork deletion with relational cascading.
-* **🔐 Client-Side Cryptographic Security**:
+* **Client-Side Cryptographic Security**:
   * Native **SHA-256 password hashing** via the browser Web Crypto API (`crypto.subtle`) ensuring plaintext passwords never leave the client.
   * Backward-compatible authentication supporting legacy accounts.
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+## Architecture & Tech Stack
 
 ```
                                   ┌───────────────────────────────┐
@@ -78,7 +78,7 @@ Designed for fluid digital exhibition, creator monetization, and art collection,
 
 ---
 
-## 🗄️ Database Schema
+## Database Schema
 
 The application utilizes a relational PostgreSQL schema hosted on Supabase:
 
@@ -159,7 +159,7 @@ erDiagram
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Art_gallery/
@@ -210,7 +210,7 @@ Art_gallery/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 * **Node.js**: `v18.0.0` or higher
@@ -256,7 +256,7 @@ npm run start
 
 ---
 
-## 🌐 Deployment
+## Deployment
 
 ### Deploy to Vercel (Recommended)
 1. Push your repository to GitHub.
@@ -271,6 +271,6 @@ For static hosting on GitHub Pages:
 
 ---
 
-## 📄 License
+## License
 
 This project is open source and licensed under the **Apache License 2.0**. See the [LICENSE](LICENSE) file for details.
